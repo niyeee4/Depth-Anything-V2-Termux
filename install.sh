@@ -11,7 +11,7 @@ apt upgrade -y -o Dpkg::Options::="--force-confold"
 
 apt install -y x11-repo
 
-apt install -y git wget termux-api file ffmpeg python-numpy opencv-python python-opencv-python python-pillow onnxruntime python-onnxruntime
+apt install -y dbus git wget termux-api file ffmpeg python-numpy opencv-python python-opencv-python python-pillow onnxruntime python-onnxruntime
 
 git clone https://github.com/niyeee4/Depth-Anything-V2-Termux
 
