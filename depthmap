@@ -1,5 +1,9 @@
-cd
-
 cd Depth-Anything-V2-Termux
 
-python depthmap.py
+find . -type f \( -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.mov" -o -iname "*.avi" -o -iname "*.webm" -o -iname "*.flv" \) -delete >/dev/null 2>&1
+
+find . -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" \) -delete >/dev/null 2>&1
+
+rm -rf frames depth_frames >/dev/null 2>&1
+
+python depthmap.py >/dev/null 2>&1
