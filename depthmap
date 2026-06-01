@@ -1,0 +1,5 @@
+cd
+
+cd Depth-Anything-V2-Termux
+
+python depthmap.py
