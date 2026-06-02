@@ -24,7 +24,7 @@ chmod +x "$PREFIX/bin/depthmap"
 
 echo
 while true; do
-echo -ne "\e[32mInstall custom font\e[0m? (y/n): "
+printf "\033[32mInstall custom font\033[0m? (y/n): "
 read -r choice < /dev/tty
 
 case "$choice" in
