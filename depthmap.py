@@ -94,6 +94,16 @@ def select_model():
             print("\nCancelled.")
             sys.exit(0)
 
+def cleanup(paths):
+    for p in paths:
+        if p and os.path.isdir(p):
+            shutil.rmtree(p, ignore_errors=True)
+        elif p and os.path.isfile(p):
+            try:
+                os.remove(p)
+            except:
+                pass
+
 encoder = select_model()
 onnx_path = onnx_path_for(encoder)
 part_path = onnx_path + ".part"
@@ -193,17 +203,19 @@ def infer_depth(bgr):
 os.makedirs("/sdcard/depthmap", exist_ok=True)
 
 if is_image:
-    bgr = cv2.imread(input_file)
-    if bgr is None:
-        print(f"Cannot read: {input_file}")
-        sys.exit(1)
-    print("Processing image...")
-    depth = infer_depth(bgr)
-    out_path = f"/sdcard/depthmap/{name}_depthmap.png"
-    Image.fromarray(depth).save(out_path)
-    os.remove(input_file)
-    subprocess.run(["termux-media-scan", out_path])
-    print(f"{GREEN}Done: {out_path}{RESET}")
+    try:
+        bgr = cv2.imread(input_file)
+        if bgr is None:
+            print(f"Cannot read: {input_file}")
+            sys.exit(1)
+        print("Processing image...")
+        depth = infer_depth(bgr)
+        out_path = f"/sdcard/depthmap/{name}_depthmap.png"
+        Image.fromarray(depth).save(out_path)
+        subprocess.run(["termux-media-scan", out_path])
+        print(f"{GREEN}Done: {out_path}{RESET}")
+    finally:
+        cleanup([input_file])
     sys.exit(0)
 
 def probe(field):
@@ -225,50 +237,51 @@ else:                 vcodec = "libx264"
 
 frames_dir = "frames"
 depth_dir  = "depth_frames"
-shutil.rmtree(frames_dir, ignore_errors=True)
-shutil.rmtree(depth_dir,  ignore_errors=True)
-os.makedirs(frames_dir)
-os.makedirs(depth_dir)
 
-print("Extracting frames...")
-subprocess.run(["ffmpeg", "-i", input_file, "-vsync", "0", f"{frames_dir}/%08d.png"],
-               check=True, stderr=subprocess.DEVNULL)
+try:
+    shutil.rmtree(frames_dir, ignore_errors=True)
+    shutil.rmtree(depth_dir,  ignore_errors=True)
+    os.makedirs(frames_dir)
+    os.makedirs(depth_dir)
 
-files = sorted(os.listdir(frames_dir))
-total = len(files)
-print(f"Processing {total} frames...")
+    print("Extracting frames...")
+    subprocess.run(["ffmpeg", "-i", input_file, "-vsync", "0", f"{frames_dir}/%08d.png"],
+                   check=True, stderr=subprocess.DEVNULL)
 
-for i, fname in enumerate(files, 1):
-    bgr   = cv2.imread(os.path.join(frames_dir, fname))
-    depth = infer_depth(bgr)
-    Image.fromarray(depth).save(os.path.join(depth_dir, fname))
-    print(f"[{i}/{total}]", end='\r')
+    files = sorted(os.listdir(frames_dir))
+    total = len(files)
+    print(f"Processing {total} frames...")
 
-print()
+    for i, fname in enumerate(files, 1):
+        bgr   = cv2.imread(os.path.join(frames_dir, fname))
+        depth = infer_depth(bgr)
+        Image.fromarray(depth).save(os.path.join(depth_dir, fname))
+        print(f"[{i}/{total}]", end='\r')
 
-output_video = f"/sdcard/depthmap/{name}_depthmap.mp4"
-cmd = [
-    "ffmpeg", "-y",
-    "-framerate", fps,
-    "-i", f"{depth_dir}/%08d.png",
-    "-i", input_file,
-    "-map", "0:v:0", "-map", "1:a?",
-    "-c:v", vcodec, "-crf", "5", "-preset", "medium",
-]
-if pixfmt:
-    cmd += ["-pix_fmt", pixfmt]
-if vcodec == "libx264" and profile == "High":
-    cmd += ["-profile:v", "high"]
-elif vcodec == "libx265" and profile == "Main 10":
-    cmd += ["-profile:v", "main10"]
-cmd += ["-r", fps, "-c:a", "copy", "-shortest", output_video]
+    print()
 
-print("Encoding...")
-subprocess.run(cmd, check=True, stderr=subprocess.DEVNULL)
+    output_video = f"/sdcard/depthmap/{name}_depthmap.mp4"
+    cmd = [
+        "ffmpeg", "-y",
+        "-framerate", fps,
+        "-i", f"{depth_dir}/%08d.png",
+        "-i", input_file,
+        "-map", "0:v:0", "-map", "1:a?",
+        "-c:v", vcodec, "-crf", "5", "-preset", "medium",
+    ]
+    if pixfmt:
+        cmd += ["-pix_fmt", pixfmt]
+    if vcodec == "libx264" and profile == "High":
+        cmd += ["-profile:v", "high"]
+    elif vcodec == "libx265" and profile == "Main 10":
+        cmd += ["-profile:v", "main10"]
+    cmd += ["-r", fps, "-c:a", "copy", "-shortest", output_video]
 
-shutil.rmtree(frames_dir, ignore_errors=True)
-shutil.rmtree(depth_dir,  ignore_errors=True)
-os.remove(input_file)
+    print("Encoding...")
+    subprocess.run(cmd, check=True, stderr=subprocess.DEVNULL)
 
-subprocess.run(["termux-media-scan", output_video])
-print(f"{GREEN}Done: {output_video}{RESET}")
+    subprocess.run(["termux-media-scan", output_video])
+    print(f"{GREEN}Done: {output_video}{RESET}")
+
+finally:
+    cleanup([frames_dir, depth_dir, input_file])
