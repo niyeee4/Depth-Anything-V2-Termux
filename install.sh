@@ -15,22 +15,21 @@ apt install -y dbus git wget termux-api file ffmpeg python-numpy opencv-python p
 
 git clone https://github.com/niyeee4/Depth-Anything-V2-Termux
 
-cd Depth-Anything-V2-Termux
+cd Depth-Anything-V2-Termux || exit 1
 
-mkdir -p $PREFIX/bin
-cp depthmap $PREFIX/bin/
+mkdir -p "$PREFIX/bin"
+cp depthmap "$PREFIX/bin/"
 
-chmod +x $PREFIX/bin/depthmap
+chmod +x "$PREFIX/bin/depthmap"
 
-read -p "Install custom font? (y/n): " install_font
+printf "\nInstall custom font? (y/n): "
+read -r install_font < /dev/tty
 
 if [[ "$install_font" =~ ^[Yy]$ ]]; then
-    mkdir -p "$HOME/.termux"
-    cp "$HOME/Depth-Anything-V2-Termux/font.ttf" "$HOME/.termux/font.ttf"
-    termux-reload-settings >/dev/null 2>&1
-    echo "Font installed."
-else
-    echo "Skipped."
+mkdir -p "$HOME/.termux"
+cp font.ttf "$HOME/.termux/font.ttf"
+termux-reload-settings >/dev/null 2>&1
+echo "Font installed."
 fi
 
 echo -e "type '\e[32mdepthmap\e[0m' for depth maps"
