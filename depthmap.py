@@ -96,7 +96,12 @@ def select_model():
 
 encoder = select_model()
 onnx_path = onnx_path_for(encoder)
+part_path = onnx_path + ".part"
 print(f"\nModel: {encoder}")
+
+if os.path.exists(part_path):
+    print(f"{YELLOW}Found incomplete download, removing...{RESET}")
+    os.remove(part_path)
 
 if not os.path.exists(onnx_path):
     sys.stdout.write("Model not found. Download? (y/n): ")
@@ -107,16 +112,22 @@ if not os.path.exists(onnx_path):
         print("Cancelled.")
         sys.exit(0)
     url = MODEL_URLS[encoder]
-    ret = subprocess.run(["wget", "-q", "--show-progress", "-O", onnx_path, url])
-    if ret.returncode != 0 or not os.path.exists(onnx_path) or os.path.getsize(onnx_path) < 1_000_000:
-        if os.path.exists(onnx_path):
-            os.remove(onnx_path)
-        ret2 = subprocess.run(["curl", "-L", "--progress-bar", "-o", onnx_path, url])
-        if ret2.returncode != 0 or not os.path.exists(onnx_path) or os.path.getsize(onnx_path) < 1_000_000:
-            if os.path.exists(onnx_path):
-                os.remove(onnx_path)
-            print("Download failed.")
-            sys.exit(1)
+    ok = False
+    ret = subprocess.run(["wget", "-q", "--show-progress", "-O", part_path, url])
+    if ret.returncode == 0 and os.path.exists(part_path) and os.path.getsize(part_path) > 1_000_000:
+        ok = True
+    else:
+        if os.path.exists(part_path):
+            os.remove(part_path)
+        ret2 = subprocess.run(["curl", "-L", "--progress-bar", "-o", part_path, url])
+        if ret2.returncode == 0 and os.path.exists(part_path) and os.path.getsize(part_path) > 1_000_000:
+            ok = True
+    if not ok:
+        if os.path.exists(part_path):
+            os.remove(part_path)
+        print("Download failed.")
+        sys.exit(1)
+    os.rename(part_path, onnx_path)
     print(f"{GREEN}Downloaded.{RESET}")
 
 TMPFILE = "__input.tmp"
