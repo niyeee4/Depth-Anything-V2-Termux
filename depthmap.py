@@ -144,7 +144,7 @@ TMPFILE = "__input.tmp"
 if os.path.exists(TMPFILE):
     os.remove(TMPFILE)
 subprocess.Popen(["termux-storage-get", TMPFILE])
-print("Pick a video/image from storage...")
+print("Pick a video/image from storage... (Ctrl+C to cancel)")
 import time
 while not os.path.exists(TMPFILE):
     time.sleep(1)
