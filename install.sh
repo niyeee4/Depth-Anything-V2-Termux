@@ -22,4 +22,15 @@ cp depthmap $PREFIX/bin/
 
 chmod +x $PREFIX/bin/depthmap
 
+read -p "Install custom font? (y/n): " install_font
+
+if [[ "$install_font" =~ ^[Yy]$ ]]; then
+    mkdir -p "$HOME/.termux"
+    cp "$HOME/Depth-Anything-V2-Termux/font.ttf" "$HOME/.termux/font.ttf"
+    termux-reload-settings >/dev/null 2>&1
+    echo "Font installed."
+else
+    echo "Skipped."
+fi
+
 echo -e "type '\e[32mdepthmap\e[0m' for depth maps"
