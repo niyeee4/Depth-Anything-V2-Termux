@@ -4,6 +4,6 @@
 # 📦 Installation
 - Open termux and paste command:
 ```bash
-curl -sL https://raw.githubusercontent.com/niyeee4/rife-ncnn-vulkan-termux/refs/heads/master/install.sh | bash
+curl -sL https://raw.githubusercontent.com/niyeee4/Depth-Anything-V2-Termux/refs/heads/main/install.sh | bash
 ```
-Type `rifevulkan` in termux for video frame interpolation
+Type `depthmap` in termux for depth maps
